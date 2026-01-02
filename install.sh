@@ -7,7 +7,8 @@ BIN_NAME="whyis"
 TARGET="/usr/bin/$BIN_NAME"
 
 printf "Do you want to install whyis? (y/N): "
-if ! read ans </dev/tty; then
+
+if ! read -r ans </dev/tty; then
   echo "Aborted."
   exit 1
 fi
@@ -19,6 +20,7 @@ case "$ans" in
     exit 0
     ;;
 esac
+
 
 echo "==> Preparing temporary directory"
 rm -rf "$TMP_DIR"
