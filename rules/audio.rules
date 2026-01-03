@@ -1,2 +1,12 @@
-volume<20 | Audio too low | Increase volume or check mixer settings
-volume<10 | Audio extremely low | Check audio drivers or hardware
+# Audio / volume rules
+
+volume < 20 | Audio too low | Increase volume or check mixer settings (`pactl set-sink-volume @DEFAULT_SINK@ +10%` or use `alsamixer`)
+volume < 10 | Audio extremely low | Check audio drivers or hardware (`pactl info` to verify default sink, `aplay -l` to list devices)
+
+# Fallback suggestions if no specific cause matches
+!any | Try: | List audio sinks: `pactl list short sinks`
+!any | Try: | Check if sink is muted: `pactl list sinks | grep Mute`
+!any | Try: | Unmute sink if needed: `pactl set-sink-mute @DEFAULT_SINK@ 0`
+!any | Try: | Restart PulseAudio/pipewire: `systemctl --user restart pulseaudio` or `systemctl --user restart pipewire`
+!any | Try: | Verify audio hardware detected: `aplay -l` or `arecord -l`
+!any | Try: | Test audio output: `speaker-test -c 2`

@@ -1,1 +1,14 @@
+# Suspend not working
+
+# Specific rule: suspend_state not equal to mem
 suspend_state!=mem | Suspend not working properly | Check kernel parameters or ACPI settings
+
+# Fallback suggestions if no specific cause matches
+!any | Try: | Check current suspend state: `cat /sys/power/state`
+!any | Try: | Test suspend manually: `systemctl suspend`
+!any | Try: | Update initramfs: `sudo update-initramfs -u` (Debian/Ubuntu) or `sudo mkinitcpio -P` (Arch)
+!any | Try: | Check kernel logs for errors: `dmesg | grep -i acpi`
+!any | Try: | Ensure no processes are preventing suspend: `systemctl list-jobs` or `systemd-inhibit`
+!any | Try: | Try different suspend modes: `echo mem > /sys/power/state` or `echo freeze > /sys/power/state`
+!any | Try: | Update BIOS/UEFI firmware to latest version
+!any | Try: | Test suspend with a clean boot

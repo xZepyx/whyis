@@ -1,3 +1,25 @@
-# format: condition | cause | fix
-power_save=on | Wi-Fi power saving reduces throughput. | sudo iw dev wlan0 set power_save off
-signal_dbm<-65 | Weak signal; move closer to AP. | Check access point or use 5GHz
+# Wi-Fi specific rules
+
+# Weak signal
+signal_dbm < -80 | Weak Wi-Fi signal | Move closer to the router or remove obstacles
+
+# Power saving mode
+power_save = on | Power saving mode enabled | Disable power save on Wi-Fi adapter (`sudo iwconfig <interface> power off`)
+
+# Fallback suggestions if no specific cause matches, with practical commands
+!any | Try: | Check your router interface for channel interference (use gateway IP: `ip route | grep default`)
+!any | Try: | Ensure Wi-Fi devices are line-of-sight
+!any | Try: | Reboot the router (`sudo reboot` if you can access it)
+!any | Try: | If all devices are affected, contact your ISP
+!any | Try: | Make sure the correct Wi-Fi password is entered on all devices
+!any | Try: | Temporarily disable any firewall or VPN that may block connectivity (`sudo ufw disable` or disable VPN)
+!any | Try: | Test with another device to see if the issue is device-specific
+!any | Try: | Try switching between 2.4GHz and 5GHz bands (check router settings)
+!any | Try: | Move the router to a more central location
+!any | Try: | Update router firmware to the latest version (check router manufacturer instructions)
+
+# Optional: commands if specific errors are matched
+!any | Try: | Restart NetworkManager service (`sudo systemctl restart NetworkManager`)
+!any | Try: | Check interface status (`nmcli device status` or `ip link`)
+!any | Try: | Force DHCP renew (`sudo dhclient -r && sudo dhclient`)
+!any | Try: | Scan for networks manually (`nmcli dev wifi rescan && nmcli dev wifi list`)

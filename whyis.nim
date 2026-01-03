@@ -1,23 +1,35 @@
 import os, osproc, strutils, strformat, tables
 
-let dataDir = "/usr/share/whyis"
+# ------------------------------
+# Configuration
+# ------------------------------
+var dataDir = "/usr/share/whyis"
+if existsEnv("WHYIS_DATA_DIR"):
+  dataDir = getEnv("WHYIS_DATA_DIR")
 
 var symptomsTable = initTable[string, tuple[collector: string, rules: string]]()
 let symptomsPath = dataDir / "symptoms.db"
 
+# ------------------------------
+# Load symptoms database
+# ------------------------------
 try:
   for line in lines(symptomsPath):
     let l = line.strip()
     if l.len == 0 or l[0] == '#': continue
     let parts = l.split("|")
     if parts.len < 3: continue
-    symptomsTable[parts[0].strip()] =
-      (collector: dataDir / parts[1].strip(),
-       rules: dataDir / parts[2].strip())
+    symptomsTable[parts[0].strip()] = (
+      collector: dataDir / parts[1].strip(),
+      rules: dataDir / parts[2].strip()
+    )
 except OSError:
   echo "Error: cannot open symptoms.db"
   quit(1)
 
+# ------------------------------
+# Parse command-line argument
+# ------------------------------
 if paramCount() < 1:
   echo "Usage: whyis <symptom> | -l | --list"
   quit(1)
@@ -40,6 +52,9 @@ if not symptomsTable.contains(symptom):
 let collector = symptomsTable[symptom].collector
 let ruleFile = symptomsTable[symptom].rules
 
+# ------------------------------
+# Run collector
+# ------------------------------
 var output = ""
 try:
   output = execProcess(collector, options={poStdErrToStdOut})
@@ -47,6 +62,9 @@ except OSError as e:
   echo fmt"Error running collector: {e.msg}"
   quit(1)
 
+# ------------------------------
+# Extract facts
+# ------------------------------
 var facts = initTable[string, string]()
 for line in output.splitLines():
   let l = line.strip()
@@ -58,6 +76,9 @@ for line in output.splitLines():
     if parts.len >= 2:
       facts["signal_dbm"] = parts[1].strip()
 
+# ------------------------------
+# Load rules
+# ------------------------------
 var rules: seq[string] = @[]
 try:
   for l in lines(ruleFile):
@@ -66,9 +87,13 @@ except OSError:
   echo fmt"Cannot open rules file: {ruleFile}"
   quit(1)
 
+# ------------------------------
+# Evaluate rules
+# ------------------------------
 echo "\nLikely causes and suggested fixes:"
 
 var anyMatched = false
+var fallbackSuggestions: seq[string] = @[]
 
 for r in rules:
   if r.len == 0 or r[0] == '#': continue
@@ -79,8 +104,13 @@ for r in rules:
   let cause = parts[1].strip()
   let fix = parts[2].strip()
 
+  if condition == "!any":
+    fallbackSuggestions.add(fmt"{cause}: {fix}")
+    continue
+
   var matched = false
 
+  # Check "=" condition
   if condition.contains("="):
     let condParts = condition.split("=")
     if condParts.len == 2:
@@ -89,6 +119,7 @@ for r in rules:
       if facts.contains(key) and facts[key] == value:
         matched = true
 
+  # Check "<" condition
   elif condition.contains("<"):
     let condParts = condition.split("<")
     if condParts.len == 2:
@@ -113,5 +144,10 @@ for r in rules:
     echo "\nCause: ", cause
     echo "Fix: ", fix
 
-if not anyMatched:
-  echo "No likely cause found."
+# ------------------------------
+# Show fallback suggestions if no match
+# ------------------------------
+if not anyMatched and fallbackSuggestions.len > 0:
+  echo "\nNo likely cause found. Suggested next steps:"
+  for s in fallbackSuggestions:
+    echo " - ", s

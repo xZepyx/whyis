@@ -1,2 +1,13 @@
-idle<20 | CPU is overloaded | Close heavy apps or investigate processes
-idle<10 | CPU critically overloaded | Kill processes or reboot
+# CPU load / idle checks
+
+idle < 20 | CPU is overloaded | Close heavy apps or investigate processes (`top` or `htop` to find processes)
+idle < 10 | CPU critically overloaded | Kill processes or reboot (`sudo kill <PID>` or `sudo reboot`)
+
+# Fallback suggestions if no specific cause matches
+!any | Try: | Check overall CPU usage: `top -o %CPU` or `htop`
+!any | Try: | List all running processes: `ps aux --sort=-%cpu | head -n 20`
+!any | Try: | Restart high CPU services: `sudo systemctl restart <service>`
+!any | Try: | Check for runaway processes: `pgrep -l <process_name>`
+!any | Try: | Reduce background load: close browser tabs, IDEs, or other heavy apps
+!any | Try: | Reboot the system if CPU is unresponsive: `sudo reboot`
+!any | Try: | Check CPU temperature for throttling: `sensors` (requires `lm_sensors`)
